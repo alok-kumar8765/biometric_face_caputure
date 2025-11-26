@@ -1,0 +1,28 @@
+version: '3.8'
+
+# Production-only docker-compose override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  web:
+    command: gunicorn --bind 0.0.0.0:8000 --workers 4 --worker-class sync --timeout 120 test_project.wsgi:application
+    environment:
+      DEBUG: "False"
+      SECURE_SSL_REDIRECT: "True"
+      SESSION_COOKIE_SECURE: "True"
+      CSRF_COOKIE_SECURE: "True"
+      SECURE_HSTS_SECONDS: 31536000
+      SECURE_HSTS_INCLUDE_SUBDOMAINS: "True"
+    restart: unless-stopped
+
+  db:
+    restart: unless-stopped
+
+  redis:
+    restart: unless-stopped
+
+  nginx:
+    restart: unless-stopped
+    environment:
+      SSL_CERT_PATH: /etc/nginx/ssl/cert.pem
+      SSL_KEY_PATH: /etc/nginx/ssl/key.pem

@@ -1,0 +1,137 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        django-version: ['4.2', '5.0']
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: test_face_liveness
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsm6 libxext6 libxrender-dev libgomp1
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install Django==${{ matrix.django-version }}
+        pip install -e .[dev]
+        pip install pytest pytest-cov pytest-django psycopg2-binary
+
+    - name: Run lint checks
+      run: |
+        pip install flake8 black isort
+        flake8 face_liveness_capture tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 face_liveness_capture tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run tests with coverage
+      env:
+        DATABASE_ENGINE: django.db.backends.postgresql
+        DATABASE_NAME: test_face_liveness
+        DATABASE_USER: postgres
+        DATABASE_PASSWORD: postgres
+        DATABASE_HOST: localhost
+        DATABASE_PORT: 5432
+        DJANGO_SETTINGS_MODULE: test_project.settings
+        SECRET_KEY: test-secret-key-do-not-use
+      run: |
+        pytest tests/ --cov=face_liveness_capture --cov-report=xml --cov-report=html --junitxml=junit.xml
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports-py${{ matrix.python-version }}-dj${{ matrix.django-version }}
+        path: |
+          junit.xml
+          htmlcov/
+        retention-days: 30
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort pylint
+
+    - name: Check code formatting (black)
+      run: black --check face_liveness_capture tests
+
+    - name: Check import sorting (isort)
+      run: isort --check-only face_liveness_capture tests
+
+    - name: Run pylint
+      run: pylint face_liveness_capture --exit-zero --disable=all --enable=E,F
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+
+    - name: Run bandit security check
+      run: bandit -r face_liveness_capture -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Check for vulnerable dependencies
+      run: safety check --json
+      continue-on-error: true

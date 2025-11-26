@@ -1,0 +1,7 @@
+recursive-include face_liveness_capture/static *
+recursive-include face_liveness_capture/templates *
+recursive-include face_liveness_capture/django_integration/templates *
+recursive-include face_liveness_capture/django_integration/static *
+include README.md
+include LICENSE
+include CHANGELOG.md

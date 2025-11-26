@@ -1,0 +1,18 @@
+#face-widget-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+}
+
+#camera, #overlay {
+    width: 100%;
+    border-radius: 50%;
+}
+
+#instructions {
+    text-align: center;
+    font-size: 18px;
+    margin-top: 10px;
+    font-weight: bold;
+}

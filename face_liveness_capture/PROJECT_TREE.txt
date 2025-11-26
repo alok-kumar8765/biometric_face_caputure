@@ -1,0 +1,56 @@
+face_liveness_capture/ (project root)
+├─ face_liveness_capture/ (python package)
+│  ├─ backend/
+│  │  ├─ __init__.py
+│  │  ├─ detection.py
+│  │  ├─ face_utils.py
+│  │  └─ validation.py
+│  ├─ django_integration/
+│  │  ├─ __init__.py
+│  │  ├─ apps.py
+│  │  ├─ serializers.py
+│  │  ├─ template_tags.py
+│  │  ├─ urls.py           # path('upload/', upload_face, name='upload-face')
+│  │  ├─ views.py          # upload_face view
+│  │  └─ templates/
+│  │     └─ face_liveness_capture/
+│  │        └─ widget.html
+│  └─ config.py
+├─ frontend/
+│  ├─ widget.css
+│  ├─ widget.html
+│  └─ widget.js
+├─ static/
+│  └─ face_liveness_capture/
+│     ├─ css/
+│     │  └─ widget.css
+│     ├─ html/
+│     │  └─ widget.html
+│     └─ js/
+│        └─ widget.js
+├─ test_project/
+│  ├─ db.sqlite3
+│  ├─ manage.py            # run from parent or use venv python
+│  ├─ templates/
+│  └─ test_project/
+│     ├─ __init__.py
+│     ├─ asgi.py
+│     ├─ settings.py       # INSTALLED_APPS includes 'face_liveness_capture.django_integration'
+│     ├─ urls.py           # includes path('face-capture/', include('face_liveness_capture.django_integration.urls'))
+│     └─ wsgi.py
+├─ pyproject.toml
+├─ setup.py
+├─ requirements.txt
+├─ README.md
+├─ PROJECT_TREE.txt        # this file
+├─ LICENSE
+└─ MANIFEST.in
+
+Notes:
+- The endpoint for the upload view is: /face-capture/upload/  (full URL: http://127.0.0.1:8000/face-capture/upload/)
+- Use the project's venv at: E:\Work_Station\ChatGPT Code\.venv
+  Activate in PowerShell: & "E:\Work_Station\ChatGPT Code\.venv\Scripts\Activate.ps1"
+- To install the package in editable mode (from inside project root):
+    & "E:\Work_Station\ChatGPT Code\.venv\Scripts\pip.exe" install -e .
+- To run the dev server using the venv python from project root:
+    & "E:\Work_Station\ChatGPT Code\.venv\Scripts\python.exe" test_project/manage.py runserver
